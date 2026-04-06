@@ -1,13 +1,33 @@
-const API = "http://slim-php.test";
+const API = "http://slim-php.test";//variable global
 
-let productos = [];
-let clienteEditId = null;
-let productoEditId = null;
+let productos = [];//para guardar los productos del detalle
+let clienteEditId = null;//indicar si se esta editando un cliente
+let productoEditId = null;// indicar si se esta editando un producto
 
+//LIMPIAR CAMPOS
+function limpiarCliente() {  //funcionar para limpiar el formulario de clientes
+  $("#c_nombre").val(""); //limpiar los inputs
+  $("#c_email").val("");
+  $("#c_dni").val("");
+  $("#c_sexo").val("");
+  clienteEditId = null;
+}
+
+function limpiarProducto() {
+  $("#p_nombre").val("");
+  $("#p_precio").val("");
+  productoEditId = null;
+}
+
+function limpiarPedido() {
+  productos = [];
+  $("#detalle").html("");
+
+}
 //  NAVEGACION
-$(".nav-btn").click(function () {
-  $(".seccion").addClass("d-none");
-  $("#" + $(this).data("target")).removeClass("d-none");
+$(".nav-btn").click(function () { //cuando hago click en el boton menu
+  $(".seccion").addClass("d-none"); //agrega la clase d-none a los .seccion para ocultarla
+  $("#" + $(this).data("target")).removeClass("d-none"); //la seccion del click actual no tendra el d-none
 });
 
 // ================= CLIENTES =================
@@ -21,78 +41,55 @@ $("#guardarCliente").click(function () {
     sexo: $("#c_sexo").val(),
   };
 
-  // GUARDAR / EDITAR
-  $("#guardarCliente").click(function () {
-    let data = {
-      nombre: $("#c_nombre").val(),
-      email: $("#c_email").val(),
-      dni: $("#c_dni").val(),
-      sexo: $("#c_sexo").val(),
-    };
-
-    if (clienteEditId) {
-      $.ajax({
-        url: API + "/clientes/" + clienteEditId,
-        method: "PUT",
-        data: data,
-        success: function () {
-          listarClientes();
-          clienteEditId = null;
-        },
-      });
-    } else {
-      $.post(API + "/clientes", data, function () {
-        listarClientes();
-      });
-    }
-  }); // 🔥 VALIDACIONES
-  if (data.nombre === "") {
-    alert("El nombre es obligatorio");
-    return;
-  }
-
-  if (data.email === "") {
-    alert("El email es obligatorio");
-    return;
-  }
-
-  if (data.dni.length !== 8) {
-    alert("El DNI debe tener 8 dígitos");
-    return;
-  }
-
-  if (data.sexo === "") {
-    alert("Selecciona el sexo");
-    return;
-  }
+  // VALIDACIONES
+  if (data.nombre === "") return alert("El nombre es obligatorio");
+  if (data.email === "") return alert("El email es obligatorio");
+  if (data.dni.length !== 8) return alert("El DNI debe tener 8 dígitos");
+  if (data.sexo === "") return alert("Selecciona el sexo");
 
   if (clienteEditId) {
+    // 🔥 EDITAR (PUT con JSON)
     $.ajax({
       url: API + "/clientes/" + clienteEditId,
       method: "PUT",
-      data: data,
-      success: function () {
+      contentType: "application/json", //  importante
+      data: JSON.stringify(data),      //  convertir a JSON
+      success: function () { //cuando todo sale bien
         listarClientes();
+        cargarClientes();
+        limpiarCliente();
         clienteEditId = null;
       },
     });
+
   } else {
-    $.post(API + "/clientes", data, function () {
-      listarClientes();
+    //  CREAR (POST con JSON)
+    $.ajax({
+      url: API + "/clientes",
+      method: "POST",
+      contentType: "application/json", //  importante
+      data: JSON.stringify(data),      //  convertir a JSON
+      success: function () {
+        listarClientes();
+        cargarClientes();
+        limpiarCliente();
+      },
     });
   }
 });
 
 // LISTAR
-function listarClientes() {
-  $.get(API + "/clientes", function (data) {
+function listarClientes() { //funcion de listar clientes
+  $.get(API + "/clientes", function (data) {//function(data) es el callback que se ejecuta cuando esta todo bien
+    //Declaro la variable html que tiene el contenido que se va a añadir
     let html = `
       <tr>
         <th>ID</th><th>Nombre</th><th>Email</th><th>DNI</th><th>Acciones</th>
       </tr>
     `;
 
-    data.forEach((c) => {
+    data.forEach((c) => {//una iteracion para añadir a la variable html contenido(datos de la tabla)
+      // (c) proviene de cliente
       html += `
         <tr>
           <td>${c.id}</td>
@@ -107,15 +104,15 @@ function listarClientes() {
       `;
     });
 
-    $("#tablaClientes").html(html);
+    $("#tablaClientes").html(html); //se añade a la tabla todo lo establecido arriba
   });
 }
 
 // BOTÓN LISTAR
-$("#listarClientes").click(listarClientes);
+$("#listarClientes").click(listarClientes); //cuando doy click al boton listar, llama a la funcion listarClientes
 
 // EDITAR
-function editarCliente(id) {
+function editarCliente(id) { //creo la funcion editarCliente con el parametro id
   $.get(API + "/clientes", function (data) {
     let c = data.find((x) => x.id == id);
 
@@ -156,12 +153,22 @@ $("#guardarProducto").click(function () {
       data: data,
       success: function () {
         listarProductos();
+        cargarProductos();
+        limpiarProducto();
         productoEditId = null;
       },
     });
   } else {
-    $.post(API + "/productos", data, function () {
-      listarProductos();
+    $.ajax({
+      url: API + "/productos",
+      method: "POST",
+      contentType: "application/json", 
+      data: JSON.stringify(data),
+      success: function () {
+        listarProductos();
+        cargarProductos();
+        limpiarProducto();
+      },
     });
   }
 });
@@ -198,10 +205,11 @@ $("#listarProductos").click(listarProductos);
 // EDITAR
 function editarProducto(id) {
   $.get(API + "/productos", function (data) {
-    let p = data.find((x) => x.id == id);
+    let p = data.find((x) => x.id == id); // datafind busca dentro del array, x cada elemento del array
+    //luego compara el id seleccionado con el del array de la bd
 
-    productoEditId = p.id;
-    $("#p_nombre").val(p.nombre);
+    productoEditId = p.id; //guardo el id del producto para luego saber si esta en modo editar
+    $("#p_nombre").val(p.nombre); //llena el input con los datos traidos de la bd (nombre, precio)
     $("#p_precio").val(p.precio);
   });
 }
@@ -209,13 +217,13 @@ function editarProducto(id) {
 // ================= PEDIDOS =================
 
 // CARGAR SELECTS
-function cargarClientes() {
-  $.get(API + "/clientes", function (data) {
-    let html = "";
+function cargarClientes() { //funcion para cargar los clientes en el select
+  $.get(API + "/clientes", function (data) { //obtiene los clientes
+    let html = ""; //variable para construir html dinamicamente
     data.forEach((c) => {
-      html += `<option value="${c.id}">${c.nombre}</option>`;
+      html += `<option value="${c.id}">${c.nombre}</option>`; //trae los datos de clientes al select
     });
-    $("#clienteSelect").html(html);
+    $("#clienteSelect").html(html);//añade al select todo el html creado arriba
   });
 }
 
@@ -231,9 +239,9 @@ function cargarProductos() {
 
 // AGREGAR DETALLE
 $("#agregar").click(function () {
-  let option = $("#productoSelect option:selected");
+  let option = $("#productoSelect option:selected"); //guardar opcion seleccionada dentro del select
 
-  let item = {
+  let item = { //crear un objeto producto
     producto_id: option.val(),
     nombre: option.text(),
     precio: option.data("precio"),
@@ -264,6 +272,7 @@ $("#guardarPedido").click(function () {
       alert("Pedido guardado");
       productos = [];
       $("#detalle").html("");
+      limpiarPedido();
     },
   });
 });

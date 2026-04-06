@@ -31,6 +31,9 @@ class ClienteController
             return $res->withJson(["error" => "El DNI ya existe"]);
         }
 
+
+        
+
         Cliente::insertar($data);
         return $res->withJson(["msg" => "Cliente creado"]);
     }
