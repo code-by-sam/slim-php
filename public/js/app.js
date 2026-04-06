@@ -257,40 +257,43 @@ function cargarProductos() {
 
 // AGREGAR DETALLE
 $("#agregar").click(function () {
+  //cuando hago click en el elemento con id: agregar (el btn)
   let option = $("#productoSelect option:selected"); //guardar opcion seleccionada dentro del select
 
   let item = {
     //crear un objeto producto
-    producto_id: option.val(),
-    nombre: option.text(),
-    precio: option.data("precio"),
-    cantidad: $("#cantidad").val(),
+    producto_id: option.val(), //el valor id del option
+    nombre: option.text(), //obtiene el texto del option
+    precio: option.data("precio"), //obtiene el valor data-precio del option
+    cantidad: $("#cantidad").val(), //obtiene valor del input cantidad
   };
 
-  productos.push(item);
+  productos.push(item); //agrega todo lo de item a un array de productos
 
-  $("#detalle").append(`
+  $("#detalle").append(` 
     <tr>
       <td>${item.nombre}</td>
       <td>${item.cantidad}</td>
     </tr>
-  `);
+  `); //agrega la fila (tr) y las celdas dentro (td)
 });
 
 // GUARDAR PEDIDO
 $("#guardarPedido").click(function () {
+  //evento click en el boton guardar pedido
   $.ajax({
     url: API + "/pedido",
     method: "POST",
     contentType: "application/json",
     data: JSON.stringify({
-      cliente_id: $("#clienteSelect").val(),
-      productos: productos,
+      //convertir string a json
+      cliente_id: $("#clienteSelect").val(), //asignar id del select a una variable
+      productos: productos, //enviar array de productos
     }),
     success: function () {
       alert("Pedido guardado");
-      productos = [];
-      $("#detalle").html("");
+      productos = []; //limpia el array
+      $("#detalle").html(""); //limpia la tabla
       limpiarPedido();
     },
   });
@@ -298,6 +301,7 @@ $("#guardarPedido").click(function () {
 
 // LISTAR PEDIDOS
 $("#listarPedidos").click(function () {
+  //accion para el boton listar pedidos
   $.get(API + "/pedido", function (data) {
     let html = `
       <tr>
