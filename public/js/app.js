@@ -1,11 +1,12 @@
-const API = "http://slim-php.test";//variable global
+const API = "http://slim-php.test"; //variable global
 
-let productos = [];//para guardar los productos del detalle
-let clienteEditId = null;//indicar si se esta editando un cliente
-let productoEditId = null;// indicar si se esta editando un producto
-
+let productos = []; //para guardar los productos del detalle
+let clienteEditId = null; //indicar si se esta editando un cliente
+let productoEditId = null; // indicar si se esta editando un producto
+let clientes = [];
 //LIMPIAR CAMPOS
-function limpiarCliente() {  //funcionar para limpiar el formulario de clientes
+function limpiarCliente() {
+  //funcionar para limpiar el formulario de clientes
   $("#c_nombre").val(""); //limpiar los inputs
   $("#c_email").val("");
   $("#c_dni").val("");
@@ -22,10 +23,10 @@ function limpiarProducto() {
 function limpiarPedido() {
   productos = [];
   $("#detalle").html("");
-
 }
 //  NAVEGACION
-$(".nav-btn").click(function () { //cuando hago click en el boton menu
+$(".nav-btn").click(function () {
+  //cuando hago click en el boton menu
   $(".seccion").addClass("d-none"); //agrega la clase d-none a los .seccion para ocultarla
   $("#" + $(this).data("target")).removeClass("d-none"); //la seccion del click actual no tendra el d-none
 });
@@ -41,34 +42,43 @@ $("#guardarCliente").click(function () {
     sexo: $("#c_sexo").val(),
   };
 
-  // VALIDACIONES
+  // VALIDACIONES BÁSICAS
   if (data.nombre === "") return alert("El nombre es obligatorio");
   if (data.email === "") return alert("El email es obligatorio");
   if (data.dni.length !== 8) return alert("El DNI debe tener 8 dígitos");
   if (data.sexo === "") return alert("Selecciona el sexo");
 
+  // 🔥 VALIDACIÓN DE DUPLICADOS
+  let dniExiste = clientes.find(
+    (c) => c.dni === data.dni && c.id != clienteEditId,
+  );
+  let emailExiste = clientes.find(
+    (c) => c.email === data.email && c.id != clienteEditId,
+  );
+  if (dniExiste) return alert("El DNI ya está registrado");
+  if (emailExiste) return alert("El email ya está registrado");
+
+  // 🔥 EDITAR
   if (clienteEditId) {
-    // 🔥 EDITAR (PUT con JSON)
     $.ajax({
       url: API + "/clientes/" + clienteEditId,
       method: "PUT",
-      contentType: "application/json", //  importante
-      data: JSON.stringify(data),      //  convertir a JSON
-      success: function () { //cuando todo sale bien
+      contentType: "application/json",
+      data: JSON.stringify(data),
+      success: function () {
         listarClientes();
         cargarClientes();
         limpiarCliente();
         clienteEditId = null;
       },
     });
-
   } else {
-    //  CREAR (POST con JSON)
+    // 🔥 CREAR
     $.ajax({
       url: API + "/clientes",
       method: "POST",
-      contentType: "application/json", //  importante
-      data: JSON.stringify(data),      //  convertir a JSON
+      contentType: "application/json",
+      data: JSON.stringify(data),
       success: function () {
         listarClientes();
         cargarClientes();
@@ -79,8 +89,10 @@ $("#guardarCliente").click(function () {
 });
 
 // LISTAR
-function listarClientes() { //funcion de listar clientes
-  $.get(API + "/clientes", function (data) {//function(data) es el callback que se ejecuta cuando esta todo bien
+function listarClientes() {
+  //funcion de listar clientes
+  $.get(API + "/clientes", function (data) {
+    //function(data) es el callback que se ejecuta cuando esta todo bien
     //Declaro la variable html que tiene el contenido que se va a añadir
     let html = `
       <tr>
@@ -88,7 +100,8 @@ function listarClientes() { //funcion de listar clientes
       </tr>
     `;
 
-    data.forEach((c) => {//una iteracion para añadir a la variable html contenido(datos de la tabla)
+    data.forEach((c) => {
+      //una iteracion para añadir a la variable html contenido(datos de la tabla)
       // (c) proviene de cliente
       html += `
         <tr>
@@ -112,7 +125,8 @@ function listarClientes() { //funcion de listar clientes
 $("#listarClientes").click(listarClientes); //cuando doy click al boton listar, llama a la funcion listarClientes
 
 // EDITAR
-function editarCliente(id) { //creo la funcion editarCliente con el parametro id
+function editarCliente(id) {
+  //creo la funcion editarCliente con el parametro id
   $.get(API + "/clientes", function (data) {
     let c = data.find((x) => x.id == id);
 
@@ -162,7 +176,7 @@ $("#guardarProducto").click(function () {
     $.ajax({
       url: API + "/productos",
       method: "POST",
-      contentType: "application/json", 
+      contentType: "application/json",
       data: JSON.stringify(data),
       success: function () {
         listarProductos();
@@ -217,13 +231,17 @@ function editarProducto(id) {
 // ================= PEDIDOS =================
 
 // CARGAR SELECTS
-function cargarClientes() { //funcion para cargar los clientes en el select
-  $.get(API + "/clientes", function (data) { //obtiene los clientes
+function cargarClientes() {
+  //funcion para cargar los clientes en el select
+  $.get(API + "/clientes", function (data) {
+    //obtiene los clientes
+    clientes = data; //  guardas todos los clientes en una variable
+
     let html = ""; //variable para construir html dinamicamente
     data.forEach((c) => {
       html += `<option value="${c.id}">${c.nombre}</option>`; //trae los datos de clientes al select
     });
-    $("#clienteSelect").html(html);//añade al select todo el html creado arriba
+    $("#clienteSelect").html(html); //añade al select todo el html creado arriba
   });
 }
 
@@ -241,7 +259,8 @@ function cargarProductos() {
 $("#agregar").click(function () {
   let option = $("#productoSelect option:selected"); //guardar opcion seleccionada dentro del select
 
-  let item = { //crear un objeto producto
+  let item = {
+    //crear un objeto producto
     producto_id: option.val(),
     nombre: option.text(),
     precio: option.data("precio"),

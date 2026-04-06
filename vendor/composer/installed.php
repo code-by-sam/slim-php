@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => 'ea8060158f4647f95bd4fad52906f399e237dfe6',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => 'ea8060158f4647f95bd4fad52906f399e237dfe6',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -113,9 +113,9 @@
             'dev_requirement' => false,
         ),
         'slim/slim' => array(
-            'pretty_version' => '3.0.0',
-            'version' => '3.0.0.0',
-            'reference' => '3b06f0f2d84dabbe81b6cea46ace46a3e883253e',
+            'pretty_version' => '3.3.0',
+            'version' => '3.3.0.0',
+            'reference' => '939f2e85d57508de9cff241d10091cd972f221c3',
             'type' => 'library',
             'install_path' => __DIR__ . '/../slim/slim',
             'aliases' => array(),
