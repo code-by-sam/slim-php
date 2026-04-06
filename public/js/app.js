@@ -21,6 +21,51 @@ $("#guardarCliente").click(function () {
     sexo: $("#c_sexo").val(),
   };
 
+  // GUARDAR / EDITAR
+  $("#guardarCliente").click(function () {
+    let data = {
+      nombre: $("#c_nombre").val(),
+      email: $("#c_email").val(),
+      dni: $("#c_dni").val(),
+      sexo: $("#c_sexo").val(),
+    };
+
+    if (clienteEditId) {
+      $.ajax({
+        url: API + "/clientes/" + clienteEditId,
+        method: "PUT",
+        data: data,
+        success: function () {
+          listarClientes();
+          clienteEditId = null;
+        },
+      });
+    } else {
+      $.post(API + "/clientes", data, function () {
+        listarClientes();
+      });
+    }
+  }); // 🔥 VALIDACIONES
+  if (data.nombre === "") {
+    alert("El nombre es obligatorio");
+    return;
+  }
+
+  if (data.email === "") {
+    alert("El email es obligatorio");
+    return;
+  }
+
+  if (data.dni.length !== 8) {
+    alert("El DNI debe tener 8 dígitos");
+    return;
+  }
+
+  if (data.sexo === "") {
+    alert("Selecciona el sexo");
+    return;
+  }
+
   if (clienteEditId) {
     $.ajax({
       url: API + "/clientes/" + clienteEditId,
