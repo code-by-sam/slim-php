@@ -15,11 +15,12 @@ class Database  //crea clase o plantilla de objetos
                 $pass,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
             );
-            echo "Conexión exitosa";
+           // echo "✔ Conexión exitosa";
             return $pdo;
 
         } catch (PDOException $e) {
-            echo "Error de conexion: " . $e->getMessage();
+            echo "Error de conexion: " . $e->getMessage() . "";
+
         }
     }
 }

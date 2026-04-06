@@ -6,9 +6,7 @@ require_once __DIR__ . '/../controllers/PedidoController.php';
 
 // CLIENTE
 
-$app->get('/test-db', function () {
-    Database::connect();
-});
+
 
 $app->get('/clientes', 'ClienteController:listar');
 

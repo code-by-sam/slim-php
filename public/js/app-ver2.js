@@ -1,89 +1,97 @@
 const API = "http://slim-php.test";
 
-let productos = [];
-let clienteEditId = null;
-let productoEditId = null;
+/* ========================
+   ESTADO GLOBAL
+======================== */
+let state = {
+  clienteEditId: null,
+  productoEditId: null,
+  productosPedido: [],
+};
 
-//  NAVEGACION
-$(".nav-btn").click(function () {
-  $(".seccion").addClass("d-none");
-  $("#" + $(this).data("target")).removeClass("d-none");
-});
-
-// ================= CLIENTES =================
-
-// GUARDAR / EDITAR
-$("#guardarCliente").click(function () {
-  let data = {
+/* ========================
+   UTILIDADES
+======================== */
+function getClienteForm() {
+  return {
     nombre: $("#c_nombre").val(),
     email: $("#c_email").val(),
     dni: $("#c_dni").val(),
     sexo: $("#c_sexo").val(),
   };
+}
 
-  // GUARDAR / EDITAR
-  $("#guardarCliente").click(function () {
-    let data = {
-      nombre: $("#c_nombre").val(),
-      email: $("#c_email").val(),
-      dni: $("#c_dni").val(),
-      sexo: $("#c_sexo").val(),
-    };
+function limpiarCliente() {
+  $("#c_nombre").val("");
+  $("#c_email").val("");
+  $("#c_dni").val("");
+  $("#c_sexo").val("");
+  state.clienteEditId = null;
+}
 
-    if (clienteEditId) {
-      $.ajax({
-        url: API + "/clientes/" + clienteEditId,
-        method: "PUT",
-        data: data,
-        success: function () {
-          listarClientes();
-          clienteEditId = null;
-        },
-      });
-    } else {
-      $.post(API + "/clientes", data, function () {
-        listarClientes();
-      });
-    }
-  }); // 🔥 VALIDACIONES
-  if (data.nombre === "") {
-    alert("El nombre es obligatorio");
-    return;
-  }
+function validarCliente(data) {
+  if (!data.nombre) return "Nombre obligatorio";
+  if (!data.email) return "Email obligatorio";
+  if (data.dni.length !== 8) return "DNI debe tener 8 dígitos";
+  if (!data.sexo) return "Selecciona sexo";
+  return null;
+}
 
-  if (data.email === "") {
-    alert("El email es obligatorio");
-    return;
-  }
+/* ========================
+   NAVEGACIÓN
+======================== */
+$(document).on("click", ".nav-btn", function () {
+  $(".seccion").addClass("d-none");
+  $("#" + $(this).data("target")).removeClass("d-none");
+});
 
-  if (data.dni.length !== 8) {
-    alert("El DNI debe tener 8 dígitos");
-    return;
-  }
+/* ========================
+   CLIENTES
+======================== */
 
-  if (data.sexo === "") {
-    alert("Selecciona el sexo");
-    return;
-  }
+// GUARDAR / EDITAR
+$("#guardarCliente").click(function () {
+  let data = getClienteForm();
 
-  if (clienteEditId) {
-    $.ajax({
-      url: API + "/clientes/" + clienteEditId,
-      method: "PUT",
-      data: data,
-      success: function () {
-        listarClientes();
-        clienteEditId = null;
-      },
-    });
+  let error = validarCliente(data);
+  if (error) return alert(error);
+
+  if (state.clienteEditId) {
+    editarCliente(state.clienteEditId, data);
   } else {
-    $.post(API + "/clientes", data, function () {
-      listarClientes();
-    });
+    crearCliente(data);
   }
 });
 
-// LISTAR
+function crearCliente(data) {
+  $.post(API + "/clientes", data, function () {
+    listarClientes();
+    limpiarCliente();
+  });
+}
+
+function editarCliente(id, data) {
+  $.ajax({
+    url: API + "/clientes/" + id,
+    method: "PUT",
+    data: data,
+    success: function () {
+      listarClientes();
+      limpiarCliente();
+    },
+  });
+}
+
+function eliminarCliente(id) {
+  if (!confirm("¿Eliminar cliente?")) return;
+
+  $.ajax({
+    url: API + "/clientes/" + id,
+    method: "DELETE",
+    success: listarClientes,
+  });
+}
+
 function listarClientes() {
   $.get(API + "/clientes", function (data) {
     let html = `
@@ -100,7 +108,7 @@ function listarClientes() {
           <td>${c.email}</td>
           <td>${c.dni}</td>
           <td>
-            <button onclick="editarCliente(${c.id})">Editar</button>
+            <button class="editar-cliente" data-id="${c.id}">Editar</button>
             <button onclick="eliminarCliente(${c.id})">Eliminar</button>
           </td>
         </tr>
@@ -111,62 +119,57 @@ function listarClientes() {
   });
 }
 
-// BOTÓN LISTAR
-$("#listarClientes").click(listarClientes);
+// EDITAR CLIENTE
+$(document).on("click", ".editar-cliente", function () {
+  let id = $(this).data("id");
 
-// EDITAR
-function editarCliente(id) {
   $.get(API + "/clientes", function (data) {
     let c = data.find((x) => x.id == id);
 
-    clienteEditId = c.id;
+    state.clienteEditId = c.id;
+
     $("#c_nombre").val(c.nombre);
     $("#c_email").val(c.email);
     $("#c_dni").val(c.dni);
     $("#c_sexo").val(c.sexo);
   });
-}
+});
 
-// ELIMINAR
-function eliminarCliente(id) {
-  if (!confirm("¿Eliminar cliente?")) return;
+/* ========================
+   PRODUCTOS
+======================== */
 
-  $.ajax({
-    url: API + "/clientes/" + id,
-    method: "DELETE",
-    success: function () {
-      listarClientes();
-    },
-  });
-}
-
-// ================= PRODUCTOS =================
-
-// GUARDAR / EDITAR
 $("#guardarProducto").click(function () {
   let data = {
     nombre: $("#p_nombre").val(),
     precio: $("#p_precio").val(),
   };
 
-  if (productoEditId) {
-    $.ajax({
-      url: API + "/productos/" + productoEditId,
-      method: "PUT",
-      data: data,
-      success: function () {
-        listarProductos();
-        productoEditId = null;
-      },
-    });
+  if (state.productoEditId) {
+    editarProducto(state.productoEditId, data);
   } else {
-    $.post(API + "/productos", data, function () {
-      listarProductos();
-    });
+    crearProducto(data);
   }
 });
 
-// LISTAR
+function crearProducto(data) {
+  $.post(API + "/productos", data, function () {
+    listarProductos();
+  });
+}
+
+function editarProducto(id, data) {
+  $.ajax({
+    url: API + "/productos/" + id,
+    method: "PUT",
+    data: data,
+    success: function () {
+      listarProductos();
+      state.productoEditId = null;
+    },
+  });
+}
+
 function listarProductos() {
   $.get(API + "/productos", function (data) {
     let html = `
@@ -182,7 +185,7 @@ function listarProductos() {
           <td>${p.nombre}</td>
           <td>${p.precio}</td>
           <td>
-            <button onclick="editarProducto(${p.id})">Editar</button>
+            <button class="editar-producto" data-id="${p.id}">Editar</button>
           </td>
         </tr>
       `;
@@ -192,23 +195,24 @@ function listarProductos() {
   });
 }
 
-// BOTÓN LISTAR
-$("#listarProductos").click(listarProductos);
+// EDITAR PRODUCTO
+$(document).on("click", ".editar-producto", function () {
+  let id = $(this).data("id");
 
-// EDITAR
-function editarProducto(id) {
   $.get(API + "/productos", function (data) {
     let p = data.find((x) => x.id == id);
 
-    productoEditId = p.id;
+    state.productoEditId = p.id;
+
     $("#p_nombre").val(p.nombre);
     $("#p_precio").val(p.precio);
   });
-}
+});
 
-// ================= PEDIDOS =================
+/* ========================
+   PEDIDOS
+======================== */
 
-// CARGAR SELECTS
 function cargarClientes() {
   $.get(API + "/clientes", function (data) {
     let html = "";
@@ -229,7 +233,7 @@ function cargarProductos() {
   });
 }
 
-// AGREGAR DETALLE
+// AGREGAR PRODUCTO AL PEDIDO
 $("#agregar").click(function () {
   let option = $("#productoSelect option:selected");
 
@@ -240,7 +244,7 @@ $("#agregar").click(function () {
     cantidad: $("#cantidad").val(),
   };
 
-  productos.push(item);
+  state.productosPedido.push(item);
 
   $("#detalle").append(`
     <tr>
@@ -258,11 +262,12 @@ $("#guardarPedido").click(function () {
     contentType: "application/json",
     data: JSON.stringify({
       cliente_id: $("#clienteSelect").val(),
-      productos: productos,
+      productos: state.productosPedido,
     }),
     success: function () {
       alert("Pedido guardado");
-      productos = [];
+
+      state.productosPedido = [];
       $("#detalle").html("");
     },
   });
@@ -270,6 +275,10 @@ $("#guardarPedido").click(function () {
 
 // LISTAR PEDIDOS
 $("#listarPedidos").click(function () {
+  listarPedidos();
+});
+
+function listarPedidos() {
   $.get(API + "/pedido", function (data) {
     let html = `
       <tr>
@@ -292,15 +301,28 @@ $("#listarPedidos").click(function () {
 
     $("#tablaPedidos").html(html);
   });
-});
+}
 
 // DETALLE
 function verDetalle(id) {
   $.get(API + "/pedido/" + id, function (data) {
     console.log(data);
-    alert("Revisar consola");
+    alert("Ver consola");
   });
 }
 
-cargarClientes();
-cargarProductos();
+/* ========================
+   INICIO
+======================== */
+
+$(document).ready(function () {
+  cargarClientes();
+  cargarProductos();
+});
+
+$(document).ready(function () {
+  $(document).on("click", "#listarClientes", listarClientes);
+  $(document).on("click", "#listarProductos", listarProductos);
+  $(document).on("click", "#listarPedidos", listarPedidos);
+
+});
